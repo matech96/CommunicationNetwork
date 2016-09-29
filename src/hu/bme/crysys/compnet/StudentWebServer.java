@@ -36,7 +36,6 @@ public class StudentWebServer extends Thread {
         try {
             String page = "";
             String method = "";
-            boolean isHead = false;
 
             int responseCode = 200;
 
@@ -44,8 +43,10 @@ public class StudentWebServer extends Thread {
             while (true) {
                 String line = in.readLine();
                 if (line.startsWith("GET") || line.startsWith("POST") || line.startsWith("HEAD")) {
-                    page = line.split(" ")[1];  // get the page file from the header
-                    method = line.split(" ")[0];// get http method
+                    String[] line_split = line.split(" ");
+                    page = line_split[1];  // get the page file from the header
+                    page = page.split("\\?")[0];  // get rid of GET components
+                    method = line_split[0]; // get http method
                 }
 
                 // if there is an empty line then break
@@ -57,18 +58,14 @@ public class StudentWebServer extends Thread {
             if (page.equals("") || page.equals("/"))
                 page = "/index.html";
 
-            // handling different methods
-            switch (method) {
-                case "GET":
-                    break;
-                case "HEAD":
-                    isHead = true;
-                    break;
-                case "POST":
-                    // TODO: load some scripts better than PHP
-                    break;
-                default:
-                    responseCode = 501; // not implemented status code
+            String directory = "www";
+            File file = new File(directory + page);
+
+            if (method.equals("")) {
+                responseCode = 501; // not implemented status code
+            } else if (!file.exists()) {
+                responseCode = 404; //resource cannot be found
+                file = new File(directory + "/mintdotcom.html"); //change the file
             }
 
             System.out.println("Sending response to: " + page);
@@ -77,18 +74,7 @@ public class StudentWebServer extends Thread {
             out.println("Server: Olcso Apache server");
             out.println("");
 
-
-            if (responseCode != 200)
-                return;
-
-            if (!isHead) {
-                File file = new File("www" + page);
-
-                if (!file.exists()) {
-                    out.println("404");
-                    return;
-                }
-
+            if (method.equals("GET")) { //if method is GET, send something back
                 BufferedReader fileReader = new BufferedReader(new FileReader(file));
 
                 while (true) {
