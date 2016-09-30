@@ -33,12 +33,13 @@ public class StudentWebServer extends Thread {
      */
     private void webServer() {
         try {
-            String page = "";
-            String method = "";
+            String page = "";   //filename of the requested content
+            String method = ""; //POST or HEAD or GET or something else, but that is not supported
+            int post_data_length = 0;   //if method is POST the length of the POST data should also set
 
             int responseCode = 200;
 
-
+            //read
             while (true) {
                 String line = in.readLine();
                 if (line.startsWith("GET") || line.startsWith("POST") || line.startsWith("HEAD")) {
@@ -47,16 +48,29 @@ public class StudentWebServer extends Thread {
                     page = page.split("\\?")[0];  // get rid of GET components
                     method = line_split[0]; // get http method
                 }
+                if (line.startsWith("Content-Length:") && method.equals("POST")){
+                    String[] line_split = line.split(" ");
+                    post_data_length = Integer.parseInt(line_split[1]);
+                }
 
                 // if there is an empty line then break
-                if (line.equals(""))
+                if (line.equals("")) {
                     break;
+                }
+            }
+
+            // collect POST data to process in a further implementation
+            String post_data = "";
+            for (int i = 0; i < post_data_length; i++) {
+                int character = in.read();
+                post_data += (char)character;
             }
 
             // handling main page
             if (page.equals("") || page.equals("/"))
                 page = "/index.html";
 
+            //files are stored in the "www" directory
             String directory = "www";
             File file = new File(directory + page);
 
@@ -73,11 +87,13 @@ public class StudentWebServer extends Thread {
             out.println("HTTP/1.0 " + responseCode);
             out.println("Server: Olcso Apache server");
 
-            //if method is GET, send something back
-            if (method.equals("GET")) {
+            //if method is GETor POST, send something back
+            if (method.equals("GET") && method.equals("POST")) {
+                //separate the header and the content
                 out.println("");
-                BufferedReader fileReader = new BufferedReader(new FileReader(file));
 
+                //Read the file and send it
+                BufferedReader fileReader = new BufferedReader(new FileReader(file));
                 while (true) {
                     String line = fileReader.readLine();
                     if (line == null)
