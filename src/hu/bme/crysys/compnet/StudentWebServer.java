@@ -2,7 +2,6 @@ package hu.bme.crysys.compnet;
 
 import java.io.*;
 import java.net.Socket;
-import java.nio.Buffer;
 
 /**
  * This class has to be completed by the students as their first assignment.
@@ -65,16 +64,18 @@ public class StudentWebServer extends Thread {
                 responseCode = 501; // not implemented status code
             } else if (!file.exists()) {
                 responseCode = 404; //resource cannot be found
-                file = new File(directory + "/mintdotcom.html"); //change the file
+                file = new File(directory + "/404.html"); //change the file
             }
 
             System.out.println("Sending response to: " + page);
 
+            // send header
             out.println("HTTP/1.0 " + responseCode);
             out.println("Server: Olcso Apache server");
-            out.println("");
 
-            if (method.equals("GET")) { //if method is GET, send something back
+            //if method is GET, send something back
+            if (method.equals("GET")) {
+                out.println("");
                 BufferedReader fileReader = new BufferedReader(new FileReader(file));
 
                 while (true) {
