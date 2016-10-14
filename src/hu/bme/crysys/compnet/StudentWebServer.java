@@ -111,7 +111,7 @@ public class StudentWebServer extends Thread {
                 } catch (IOException e) {
                     e.printStackTrace();
                 } finally {
-                    //close streams if they hav been created
+                    //close streams if they have been created
                     if (fr != null)
                         fr.close();
                     if (os != null)
