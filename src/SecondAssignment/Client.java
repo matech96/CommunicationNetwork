@@ -44,6 +44,12 @@ public class Client {
         return segment;
     }
 
+    /**
+     * Waits for the segment which have the same sequence number equals ACK. If it is different sends an empty segment
+     * whit an acknowledgement number.
+     * @return The received TCPSegment
+     * @throws SocketTimeoutException
+     */
     private TCPSegment receiveCorrectSegment() throws SocketTimeoutException {
         int receivedSeq = -1;
         TCPSegment received = null;
@@ -52,8 +58,9 @@ public class Client {
             receivedSeq = received.getSequenceNumber();
             if (receivedSeq != ACK) {
                 System.out.println("Invalid segment received!");
-                System.out.println(ACK);
-                System.out.println(receivedSeq);
+                System.out.println("Expected sequence number: " + ACK);
+                System.out.println("Received sequence number: " + receivedSeq);
+                //Resending ACK number
                 TCPSegment emptySegment = new TCPSegment(sender, String.valueOf(destinationPort), SEQ, ACK, true, false, false, false, "");
                 sendSegment(emptySegment);
             }
@@ -79,10 +86,13 @@ public class Client {
 
     }
 
+    /**
+     * Uses receiveCorrectSegment() and sends the ACK segment back.
+     * @return The received TCPSegment
+     * @throws SocketTimeoutException
+     */
     private TCPSegment receiveSegmentAndSendAck() throws SocketTimeoutException {
         TCPSegment received = receiveCorrectSegment();
-        System.out.println(SEQ);
-        System.out.println(ACK);
         TCPSegment ackSegment = new TCPSegment(sender, String.valueOf(destinationPort), SEQ, ACK,
                 false, true, false, false, "");
         sendSegment(ackSegment);
@@ -90,6 +100,12 @@ public class Client {
         return received;
     }
 
+    /**
+     * Sends a segment and calls receiveCorrectSegment().
+     * @param segment
+     * @return TCPSegment which acknowledges that our segment has arrived.
+     * @throws SocketTimeoutException
+     */
     private TCPSegment sendSegmentAndWaitForAck(TCPSegment segment) throws SocketTimeoutException {
         sendSegment(segment);
         int receivedAck = -1;
@@ -204,7 +220,6 @@ public class Client {
     /**
      * Terminates the virtual TCP connection with the server.
      */
-
     private void terminateConnection() throws SocketTimeoutException {
         TCPSegment finSegment = new TCPSegment(sender, String.valueOf(destinationPort), SEQ, ACK,
                 false, false, true, false, "");
