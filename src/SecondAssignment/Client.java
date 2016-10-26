@@ -28,6 +28,7 @@ public class Client {
 
     /**
      * Reads a TCPSegment from socket
+     *
      * @return TCPSegment or null, if there was an error
      */
     private TCPSegment receiveSegment() throws SocketTimeoutException {
@@ -45,8 +46,9 @@ public class Client {
     }
 
     /**
-     * Waits for the segment which have the same sequence number equals ACK. If it is different sends an empty segment
-     * whit an acknowledgement number.
+     * Waits for the segment which has the same sequence number as ACK. If it is different sends an empty segment
+     * with an acknowledgement number.
+     *
      * @return The received TCPSegment
      * @throws SocketTimeoutException
      */
@@ -65,12 +67,13 @@ public class Client {
                 sendSegment(emptySegment);
             }
         }
-        ACK = received.getSequenceNumber() + 1;
+        if (received != null)
+            ACK = received.getSequenceNumber() + 1;
         return received;
     }
 
     /**
-     * Serialize TCPSegment and send it through socket
+     * Serialize TCPSegment and send it through the socket
      */
     private void sendSegment(TCPSegment segment) {
         System.out.println(segment);
@@ -88,6 +91,7 @@ public class Client {
 
     /**
      * Uses receiveCorrectSegment() and sends the ACK segment back.
+     *
      * @return The received TCPSegment
      * @throws SocketTimeoutException
      */
@@ -98,18 +102,6 @@ public class Client {
         sendSegment(ackSegment);
 
         return received;
-    }
-
-    /**
-     * Sends a segment and calls receiveCorrectSegment().
-     * @param segment
-     * @return TCPSegment which acknowledges that our segment has arrived.
-     * @throws SocketTimeoutException
-     */
-    private TCPSegment sendSegmentAndWaitForAck(TCPSegment segment) throws SocketTimeoutException {
-        sendSegment(segment);
-        int receivedAck = -1;
-        return receiveCorrectSegment();
     }
 
     /**
@@ -193,7 +185,7 @@ public class Client {
             synack = receiveSegment();
             System.out.println(synack.isACKflag());
             System.out.println(synack.isSYNflag());
-        } while (!synack.isSYNflag() || !synack.isACKflag());
+        } while (!synack.isSYNflag() || !synack.isACKflag()); // while the response is not SYNACK
         ACK = synack.getSequenceNumber() + 1;
         TCPSegment ackPacked = new TCPSegment(sender, String.valueOf(destinationPort), SEQ, ACK, false, true, false, false, "");
         sendSegment(ackPacked);
@@ -202,14 +194,14 @@ public class Client {
     @Override
     protected void finalize() throws Throwable {
         super.finalize();
-        socket.close();
+        socket.close(); // at the end of the program close the socket
     }
 
     /**
      * Receives data from the server. (20 times 10 characters.)
      */
     public void reciveData() throws SocketTimeoutException {
-        while (receivedData.length() < 200) {
+        while (receivedData.length() < 200) { // check to see if we are waiting for more data
             TCPSegment received = receiveSegmentAndSendAck();
             receivedData += received.getData();
         }
@@ -224,16 +216,16 @@ public class Client {
         TCPSegment finSegment = new TCPSegment(sender, String.valueOf(destinationPort), SEQ, ACK,
                 false, false, true, false, "");
         TCPSegment received = null;
-        do {
+        do { // send FIN until we receive an ACK
             sendSegment(finSegment);
             received = receiveSegment();
         } while (!received.isACKflag());
         System.out.println("fin ack");
-        do {
+        do {// wait for a FIN packet
             received = receiveSegment();
         } while (!received.isFINflag());
         TCPSegment ackSegment = new TCPSegment(sender, String.valueOf(destinationPort), received.getAcknowledgeNumber(),
-                received.getSequenceNumber()+1,
+                received.getSequenceNumber() + 1,
                 false, true, false, false, "");
         sendSegment(ackSegment);
 
@@ -245,7 +237,7 @@ public class Client {
     private void sendDataBackWithTCP() {
         try {
             Socket socket = new Socket(destinationAddress, destinationPort);
-            new ObjectOutputStream(socket.getOutputStream()).writeObject(receivedData);
+            new ObjectOutputStream(socket.getOutputStream()).writeObject(receivedData); // serialize the String object
 
             socket.close();
         } catch (IOException e) {
